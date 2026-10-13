@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Наше фото 💖</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(135deg, #e6c6d8 0%, #d9a8c9 50%, #c9a3dd 100%);
+    min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px 16px 40px;
+  }
+  .app {
+    max-width: 480px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 28px;
+    padding: 24px;
+    box-shadow: 0 20px 60px rgba(160, 60, 110, 0.35),
+                0 4px 12px rgba(160, 60, 110, 0.18);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+  }
+  h1 {
+    font-size: 24px;
+    font-weight: 800;
+    text-align: center;
+    margin: 0 0 6px;
+    color: #d63384;
+    letter-spacing: -0.5px;
+  }
+  .subtitle {
+    text-align: center;
+    color: #6b5563;
+    font-size: 14px;
+    margin: 0 0 20px;
+    transition: color 0.4s;
+  }
+  .photo-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #c9a9bd;
+    box-shadow: 0 8px 24px rgba(160, 60, 110, 0.28);
+  }
+  .layer {
+    position: absolute;
+    inset: 0;
+  }
+  .photo {
+    position: absolute;
+    inset: 0;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: #c9a9bd;
+  }
+  .cover {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    touch-action: none;
+  }
+  .cell {
+    fill: #c98aab;
+    stroke: #8a4a6b;
+    stroke-width: 2;
+    stroke-linejoin: round;
+    cursor: pointer;
+    transition: opacity 0.55s ease;
+    transform-box: fill-box;
+    transform-origin: center;
+    will-change: opacity;
+  }
+  .cell:hover { opacity: 0.82; }
+  .cell.revealed {
+    opacity: 0;
+    pointer-events: none;
+  }
+  .cell.pop { animation: pop 0.4s ease; }
+  @keyframes pop {
+    0%   { transform: scale(1); }
+    50%  { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+
+  /* ---- Текстовый слой ---- */
+  .text-layer {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.9s ease, visibility 0s linear 0.9s;
+  }
+  .text-layer.active {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.9s ease, visibility 0s;
+  }
+  .text-content {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 8%;
+    gap: 8px;
+    background: linear-gradient(135deg, #fff0f6 0%, #ffd7e8 100%);
+    color: #d63384;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.5px;
+    z-index: 0;
+  }
+  .text-content .l1 { font-size: clamp(17px, 4.8vw, 26px); }
+  .text-content .l2 { font-size: clamp(20px, 5.8vw, 32px); }
+  .text-content .l3 { font-size: clamp(15px, 4.2vw, 22px); opacity: 0.85; }
+  .text-content .l4 { font-size: clamp(19px, 5.5vw, 30px); margin-top: 6px; }
+
+  .progress {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 18px;
+  }
+  .bar {
+    flex: 1;
+    height: 10px;
+    background: rgba(160, 90, 130, 0.35);
+    border-radius: 5px;
+    overflow: hidden;
+  }
+  .fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #ff6b9d, #d63384);
+    border-radius: 5px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  #progressText {
+    font-weight: 700;
+    color: #d63384;
+    font-size: 14px;
+    min-width: 42px;
+    text-align: right;
+  }
+  .controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+  .tool {
+    flex: 1;
+    border: 2px solid transparent;
+    background: white;
+    color: #666;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 13px;
+    padding: 12px 8px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: all 0.15s;
+    box-shadow: 0 2px 8px rgba(160, 60, 110, 0.18);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+  }
+  .tool:hover { background: #fff5fa; transform: translateY(-1px); }
+  .tool:active { transform: translateY(0); }
+
+  .secret {
+    position: fixed;
+    inset: 0;
+    background: rgba(255, 240, 248, 0.96);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.7s;
+    z-index: 100;
+    text-align: center;
+    padding: 24px;
+  }
+  .secret.show { opacity: 1; pointer-events: auto; }
+  .secret h2 {
+    font-size: 26px;
+    color: #d63384;
+    margin: 0 0 12px;
+    font-weight: 800;
+    line-height: 1.25;
+    max-width: 420px;
+    transform: scale(0.8);
+    transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s;
+  }
+  .secret.show h2 { transform: scale(1); }
+  .secret p {
+    font-size: 16px;
+    color: #777;
+    margin: 0 0 28px;
+    max-width: 360px;
+    line-height: 1.55;
+  }
+  .secret button {
+    border: none;
+    background: linear-gradient(135deg, #ff6b9d, #d63384);
+    color: white;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 15px;
+    padding: 14px 32px;
+    border-radius: 16px;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(214, 51, 132, 0.3);
+    transition: transform 0.15s;
+  }
+  .secret button:hover { transform: translateY(-2px); }
+
+  .floating-heart {
+    position: fixed;
+    bottom: -40px;
+    pointer-events: none;
+    animation: floatUp linear forwards;
+    z-index: 200;
+  }
+  @keyframes floatUp {
+    0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(-110vh) rotate(360deg); opacity: 0; }
+  }
+
+  .sparkle {
+    position: fixed;
+    pointer-events: none;
+    font-size: 22px;
+    z-index: 50;
+    animation: sparkleUp 0.8s ease-out forwards;
+    transform: translate(-50%, -50%);
+  }
+  @keyframes sparkleUp {
+    0%   { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+    100% { opacity: 0; transform: translate(-50%, -150%) scale(1.2); }
+  }
+  .photo-missing {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #ffd7e8, #e8d4f5);
+    color: #d63384;
+    font-weight: 700;
+    text-align: center;
+    padding: 20px;
+    font-size: 14px;
+    line-height: 1.6;
+    z-index: 5;
+  }
+  .photo-missing code {
+    background: rgba(255,255,255,0.75);
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 13px;
+    margin-top: 8px;
+    display: inline-block;
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <h1 id="appTitle">Наше фото</h1>
+  <p class="subtitle" id="appSubtitle">Проведи пальцем или тыкай по кнопочке 💕</p>
+
+  <div class="photo-wrap" id="photoWrap">
+    <!-- Слой 1: фото -->
+    <div class="layer photo-layer" id="photoLayer">
+      <div class="photo" id="photo"></div>
+      <svg class="cover" id="photoCover" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+        <g id="photoCells"></g>
+      </svg>
+    </div>
+
+    <!-- Слой 2: текст-признание -->
+    <div class="layer text-layer" id="textLayer">
+      <div class="text-content">
+        <div class="l1">я тебя очень люблю</div>
+        <div class="l2">скучаю по тебе</div>
+        <div class="l1">и безумно ценю</div>
+        <div class="l4">ты самая лучшая 💖</div>
+      </div>
+      <svg class="cover" id="textCover" viewBox="0 0 1000 1000" preserveAspectRatio="none">
+        <g id="textCells"></g>
+      </svg>
+    </div>
+  </div>
+
+  <div class="progress">
+    <div class="bar"><div class="fill" id="progressFill"></div></div>
+    <span id="progressText">0%</span>
+  </div>
+
+  <div class="controls">
+    <button class="tool" id="randomBtn">✨ Открыть кусочек</button>
+    <button class="tool" id="resetBtn">🔄 Сброс</button>
+  </div>
+</div>
+
+<div class="secret" id="secret">
+  <h2 id="secretTitle"></h2>
+  <p id="secretText"></p>
+  <button id="closeSecret">Посмотреть ещё раз 💗</button>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ============================================================
+     ⚙️  НАСТРОЙКИ
+     ============================================================ */
+  const CONFIG = {
+    title:        'наше фото',
+    subtitle:     'проведи пальцем по осколкам 💕',
+    subtitle2:    'а теперь раскрась ещё раз 💕',
+    secretTitle:  'ты со всем справилась, умничка! 💖',
+    secretText:   'каждый кусочек это момент, который я храню. ты  моё любимое воспоминание и самая лучшая, еще это и на обоях стоит)',
+    photoSrc:     'photo.jpg',
+    storageKey:   'photo-reveal-v2',
+    photoGrid:    7,     // 7x7 = 49 осколков для фото
+    textGrid:     5,     // 5x5 = 25 осколков для текста
+    jitter:       0.42   // насколько сильно «ломать» сетку (0 — ровные квадраты, 0.45 — максимум)
+  };
+  /* ============================================================ */
+
+  document.getElementById('appTitle').textContent    = CONFIG.title;
+  document.getElementById('appSubtitle').textContent = CONFIG.subtitle;
+
+  const photoEl      = document.getElementById('photo');
+  const photoWrap    = document.getElementById('photoWrap');
+  const photoCover   = document.getElementById('photoCover');
+  const photoCellsG  = document.getElementById('photoCells');
+  const textLayer    = document.getElementById('textLayer');
+  const textCover    = document.getElementById('textCover');
+  const textCellsG   = document.getElementById('textCells');
+  const appSubtitle  = document.getElementById('appSubtitle');
+  const progressFill = document.getElementById('progressFill');
+  const progressText = document.getElementById('progressText');
+  const randomBtn    = document.getElementById('randomBtn');
+  const resetBtn     = document.getElementById('resetBtn');
+  const secret       = document.getElementById('secret');
+
+  let photoCells = [];
+  let textCells  = [];
+  let activeCells = null;
+  let stage = 1;
+  let completedPhoto = false;
+  let completedText  = false;
+  let isPainting = false;
+  let transitioning = false;
+
+  /* ---------- Генерация произвольных многоугольников ---------- */
+  function buildPolygons(groupEl, cols, rows, jitter) {
+    groupEl.innerHTML = '';
+    const W = 1000, H = 1000;
+    const cw = W / cols;
+    const ch = H / rows;
+    const jx = cw * jitter;
+    const jy = ch * jitter;
+
+    // Сетка с рандомно смещёнными вершинами
+    const pts = [];
+    for (let r = 0; r <= rows; r++) {
+      pts[r] = [];
+      for (let c = 0; c <= cols; c++) {
+        let x = c * cw;
+        let y = r * ch;
+        if (r > 0 && r < rows) y += (Math.random() - 0.5) * 2 * jy;
+        if (c > 0 && c < cols) x += (Math.random() - 0.5) * 2 * jx;
+        x = Math.max(-8, Math.min(W + 8, x));
+        y = Math.max(-8, Math.min(H + 8, y));
+        pts[r][c] = [x, y];
+      }
+    }
+
+    const cells = [];
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const p1 = pts[r][c];
+        const p2 = pts[r][c + 1];
+        const p3 = pts[r + 1][c + 1];
+        const p4 = pts[r + 1][c];
+
+        // Случайно решаем: оставить четырёхугольник или разбить на 2 треугольника
+        const split = Math.random() < 0.35; // 35% шанс, что будет 2 треугольника
+
+        if (split) {
+          // диагональ p1–p3 или p2–p4
+          if (Math.random() < 0.5) {
+            addPoly([p1, p2, p3]);
+            addPoly([p1, p3, p4]);
+          } else {
+            addPoly([p1, p2, p4]);
+            addPoly([p2, p3, p4]);
+          }
+        } else {
+          addPoly([p1, p2, p3, p4]);
+        }
+      }
+    }
+
+    function addPoly(points) {
+      const poly = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+      poly.setAttribute('points', points.map(p => p[0] + ',' + p[1]).join(' '));
+      poly.setAttribute('class', 'cell');
+      poly.dataset.index = cells.length;
+      groupEl.appendChild(poly);
+      cells.push(poly);
+    }
+
+    return cells;
+  }
+
+  /* ---------- Инициализация фото ---------- */
+  function initPhotoLayer(aspect) {
+    photoWrap.style.aspectRatio = aspect;
+    photoCells = buildPolygons(photoCellsG, CONFIG.photoGrid, CONFIG.photoGrid, CONFIG.jitter);
+  }
+
+  const testImg = new Image();
+  testImg.onload = () => {
+    photoEl.style.backgroundImage = 'url("' + CONFIG.photoSrc + '")';
+    let aspect = testImg.naturalWidth / testImg.naturalHeight;
+    aspect = Math.max(0.75, Math.min(1.5, aspect));
+    initPhotoLayer(aspect);
+    textCells = buildPolygons(textCellsG, CONFIG.textGrid, CONFIG.textGrid, CONFIG.jitter);
+    setStage(1);
+    loadState();
+    updateProgress();
+  };
+  testImg.onerror = () => {
+    photoEl.innerHTML =
+      '<div class="photo-missing">' +
+      '</div>';
+    initPhotoLayer(1);
+    textCells = buildPolygons(textCellsG, CONFIG.textGrid, CONFIG.textGrid, CONFIG.jitter);
+    setStage(1);
+    loadState();
+    updateProgress();
+  };
+  testImg.src = CONFIG.photoSrc;
+
+  /* ---------- Стадии ---------- */
+  function setStage(n) {
+    stage = n;
+    if (n === 1) {
+      activeCells = photoCells;
+      photoCover.dataset.active = 'true';
+      textCover.dataset.active = 'false';
+      textLayer.classList.remove('active');
+      appSubtitle.textContent = CONFIG.subtitle;
+    } else {
+      activeCells = textCells;
+      photoCover.dataset.active = 'false';
+      textCover.dataset.active = 'true';
+      textLayer.classList.add('active');
+      appSubtitle.textContent = CONFIG.subtitle2;
+      completedPhoto = true;
+      updateProgress();
+    }
+  }
+
+  function enterStage2() {
+    if (transitioning) return;
+    transitioning = true;
+    setTimeout(() => {
+      setStage(2);
+      transitioning = false;
+      checkTextComplete();
+    }, 1600);
+  }
+
+  /* ---------- Открытие одного осколка ---------- */
+  function revealCell(cell) {
+    if (!cell || !cell.classList) return;
+    if (!cell.classList.contains('cell')) return;
+    if (cell.classList.contains('revealed')) return;
+    if (activeCells && activeCells.indexOf(cell) === -1) return;
+
+    cell.classList.add('pop');
+    setTimeout(() => cell.classList.remove('pop'), 420);
+    cell.classList.add('revealed');
+
+    const rect = cell.getBoundingClientRect();
+    if (rect.width > 0) {
+      sparkle(rect.left + rect.width / 2, rect.top + rect.height / 2);
+    }
+
+    saveState();
+    updateProgress();
+  }
+
+  /* ---------- Рисование пальцем/мышью ---------- */
+  function setupCover(coverEl) {
+    coverEl.addEventListener('pointerdown', (e) => {
+      if (coverEl.dataset.active !== 'true') return;
+      e.preventDefault();
+      isPainting = true;
+      let target = e.target;
+      if (!target.classList || !target.classList.contains('cell')) {
+        target = document.elementFromPoint(e.clientX, e.clientY);
+      }
+      revealCell(target);
+      try { coverEl.setPointerCapture(e.pointerId); } catch (err) {}
+    });
+
+    coverEl.addEventListener('pointermove', (e) => {
+      if (!isPainting) return;
+      if (coverEl.dataset.active !== 'true') return;
+      e.preventDefault();
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      if (el && el.classList && el.classList.contains('cell')) {
+        revealCell(el);
+      }
+    });
+  }
+
+  setupCover(photoCover);
+  setupCover(textCover);
+
+  document.addEventListener('pointerup', () => { isPainting = false; });
+  document.addEventListener('pointercancel', () => { isPainting = false; });
+  photoCover.addEventListener('contextmenu', e => e.preventDefault());
+  textCover.addEventListener('contextmenu', e => e.preventDefault());
+
+  /* ---------- Искры ---------- */
+  function sparkle(x, y) {
+    const el = document.createElement('div');
+    el.className = 'sparkle';
+    el.textContent = ['✨','💖','💕','🌟','💗'][Math.floor(Math.random() * 5)];
+    el.style.left = x + 'px';
+    el.style.top  = y + 'px';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 850);
+  }
+
+  /* ---------- Прогресс ---------- */
+  function updateProgress() {
+    if (stage === 1) {
+      if (!photoCells.length) return;
+      const revealed = photoCells.filter(c => c.classList.contains('revealed')).length;
+      const percent = Math.round(revealed / photoCells.length * 100);
+      progressFill.style.width = percent + '%';
+      progressText.textContent = percent + '%';
+
+      if (percent === 100) {
+        if (!completedPhoto) {
+          completedPhoto = true;
+          enterStage2();
+        }
+      } else {
+        completedPhoto = false;
+      }
+    } else {
+      if (!textCells.length) return;
+      const revealed = textCells.filter(c => c.classList.contains('revealed')).length;
+      const percent = Math.round(revealed / textCells.length * 100);
+      progressFill.style.width = percent + '%';
+      progressText.textContent = percent + '%';
+
+      if (percent === 100 && !completedText) {
+        completedText = true;
+        setTimeout(showSecret, 700);
+      } else if (percent < 100) {
+        completedText = false;
+      }
+    }
+  }
+
+  function checkTextComplete() {
+    if (!textCells.length) return;
+    const allRevealed = textCells.every(c => c.classList.contains('revealed'));
+    if (allRevealed && !completedText) {
+      completedText = true;
+      setTimeout(showSecret, 400);
+    }
+  }
+
+  /* ---------- Финальный секрет ---------- */
+  function showSecret() {
+    document.getElementById('secretTitle').textContent = CONFIG.secretTitle;
+    document.getElementById('secretText').textContent  = CONFIG.secretText;
+    secret.classList.add('show');
+    spawnHearts(28);
+  }
+
+  document.getElementById('closeSecret').addEventListener('click', () => {
+    secret.classList.remove('show');
+  });
+
+  function spawnHearts(count) {
+    const emojis = ['💖','💗','💕','🌸','✨','💝'];
+    for (let i = 0; i < count; i++) {
+      (function (i) {
+        setTimeout(() => {
+          const heart = document.createElement('div');
+          heart.className = 'floating-heart';
+          heart.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+          heart.style.left = Math.random() * 100 + 'vw';
+          heart.style.fontSize = (16 + Math.random() * 22) + 'px';
+          heart.style.animationDuration = (3.5 + Math.random() * 3) + 's';
+          document.body.appendChild(heart);
+          setTimeout(() => heart.remove(), 7000);
+        }, i * 90);
+      })(i);
+    }
+  }
+
+  /* ---------- Кнопки ---------- */
+  randomBtn.addEventListener('click', () => {
+    if (!activeCells) return;
+    const hidden = activeCells.filter(c => !c.classList.contains('revealed'));
+    if (!hidden.length) return;
+    const pick = hidden[Math.floor(Math.random() * hidden.length)];
+    revealCell(pick);
+  });
+
+  resetBtn.addEventListener('click', () => {
+    if (!confirm('Сбросить всё и начать заново?')) return;
+    photoCells.forEach(c => c.classList.remove('revealed'));
+    textCells.forEach(c => c.classList.remove('revealed'));
+    completedPhoto = false;
+    completedText  = false;
+    transitioning  = false;
+    secret.classList.remove('show');
+    setStage(1);
+    saveState();
+    updateProgress();
+  });
+
+  /* ---------- Сохранение / загрузка ---------- */
+  function saveState() {
+    try {
+      const photoData = photoCells.map(c => c.classList.contains('revealed') ? 1 : 0);
+      const textData  = textCells.map(c => c.classList.contains('revealed') ? 1 : 0);
+      localStorage.setItem(CONFIG.storageKey + '-photo', JSON.stringify(photoData));
+      localStorage.setItem(CONFIG.storageKey + '-text',  JSON.stringify(textData));
+    } catch (e) {}
+  }
+
+  function loadState() {
+    try {
+      const photoRaw = localStorage.getItem(CONFIG.storageKey + '-photo');
+      const textRaw  = localStorage.getItem(CONFIG.storageKey + '-text');
+      if (photoRaw) {
+        const data = JSON.parse(photoRaw);
+        if (Array.isArray(data)) {
+          data.forEach((v, i) => {
+            if (v === 1 && photoCells[i]) photoCells[i].classList.add('revealed');
+          });
+        }
+      }
+      if (textRaw) {
+        const data = JSON.parse(textRaw);
+        if (Array.isArray(data)) {
+          data.forEach((v, i) => {
+            if (v === 1 && textCells[i]) textCells[i].classList.add('revealed');
+          });
+        }
+      }
+
+      const photoAll = photoCells.length > 0 && photoCells.every(c => c.classList.contains('revealed'));
+      if (photoAll) {
+        completedPhoto = true;
+        // моментально, без задержки
+        stage = 2;
+        activeCells = textCells;
+        photoCover.dataset.active = 'false';
+        textCover.dataset.active = 'true';
+        textLayer.classList.add('active');
+        appSubtitle.textContent = CONFIG.subtitle2;
+        checkTextComplete();
+      }
+    } catch (e) {}
+  }
+})();
+</script>
+</body>
+</html>
